@@ -1,0 +1,30 @@
+# Production overlay: adds a Caddy reverse proxy for automatic HTTPS.
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#
+# Requires PLATFORM_DOMAIN in .env (e.g. emails.freeserp.com) and that domain's
+# DNS A record pointing at this server. Do NOT use the dev overlay in prod (it
+# adds Mailhog and exposes Postgres/Redis to the host).
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      PLATFORM_DOMAIN: ${PLATFORM_DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+
+  # App is reached through Caddy on the internal network; no need to publish it.
+  app:
+    ports: !reset []
+
+volumes:
+  caddy_data:
+  caddy_config:

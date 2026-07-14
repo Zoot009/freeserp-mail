@@ -1,0 +1,14 @@
+node_modules
+.next
+.git
+freeserp-backend-v2
+freeserp-frontend-v2
+freeserp-v2
+scripts
+.env
+.env*.local
+npm-debug.log
+Dockerfile
+docker-compose*.yml
+README.md
+*.tsbuildinfo
