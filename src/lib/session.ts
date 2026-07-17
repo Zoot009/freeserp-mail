@@ -60,7 +60,9 @@ export async function createSession(payload: SessionPayload): Promise<void> {
   const store = await cookies();
   store.set(COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    // Secure cookies require HTTPS — only enable when the app is actually served
+    // over https (otherwise the browser silently drops the cookie on http://IP).
+    secure: env.appUrl.startsWith("https://"),
     sameSite: "lax",
     path: "/",
     maxAge: MAX_AGE_SECONDS,

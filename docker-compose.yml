@@ -46,9 +46,12 @@ services:
       ENCRYPTION_KEY: ${ENCRYPTION_KEY}
       APP_URL: ${APP_URL:-http://localhost:3000}
       ALLOW_REGISTRATION: ${ALLOW_REGISTRATION:-true}
+      UPLOADS_DIR: /app/data/uploads
       NODE_ENV: production
     ports:
       - "${APP_PORT:-3000}:3000"
+    volumes:
+      - uploads:/app/data/uploads
 
   worker:
     build: .
@@ -70,3 +73,4 @@ services:
 volumes:
   pgdata:
   redisdata:
+  uploads:

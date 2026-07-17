@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { type ChangeEvent, useActionState, useState } from "react";
 import { Button, Input, Label, Textarea, FormError } from "@/components/ui";
 import type { TemplateState } from "./actions";
 
@@ -27,6 +27,29 @@ export function TemplateEditor({
     {}
   );
   const [html, setHtml] = useState(initial?.html ?? DEFAULT_HTML);
+  const [uploading, setUploading] = useState(false);
+  const [uploaded, setUploaded] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | undefined>();
+
+  async function handleUpload(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setUploadError(undefined);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Upload failed");
+      setUploaded(data.url as string);
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
+  }
 
   return (
     <form action={formAction} className="grid gap-6 lg:grid-cols-2">
@@ -53,6 +76,31 @@ export function TemplateEditor({
             Use <code>{"{{ firstName }}"}</code>, <code>{"{{ email }}"}</code>, event
             properties, and <code>{"{{ unsubscribeUrl }}"}</code>.
           </p>
+
+          <div className="mt-3 rounded-md border border-slate-200 bg-slate-50 p-3">
+            <div className="flex items-center gap-3">
+              <label className="cursor-pointer rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-slate-700 hover:bg-slate-50">
+                {uploading ? "Uploading…" : "Upload image"}
+                <input type="file" accept="image/*" className="hidden" onChange={handleUpload} disabled={uploading} />
+              </label>
+              <span className="text-xs text-slate-400">PNG, JPG, GIF, WEBP, SVG · max 5 MB</span>
+            </div>
+            {uploadError && <p className="mt-2 text-xs text-red-600">{uploadError}</p>}
+            {uploaded && (
+              <div className="mt-2">
+                <p className="mb-1 text-xs text-slate-500">
+                  Uploaded ✓ — paste this into your HTML where you want the image:
+                </p>
+                <textarea
+                  readOnly
+                  onFocus={(e) => e.target.select()}
+                  rows={2}
+                  className="w-full rounded border border-slate-300 px-2 py-1 font-mono text-xs"
+                  value={`<img src="${uploaded}" alt="" style="max-width:100%;display:block" />`}
+                />
+              </div>
+            )}
+          </div>
         </div>
         <div>
           <Label htmlFor="text">Plain-text version (optional)</Label>
